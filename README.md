@@ -136,14 +136,23 @@ Passwords are encrypted
 API protected with secure tokens (JWT)
 
 📦 Folders Explanation
+
 backend/
+
 │
+
 ├── users/        = login, register, profiles
+
 ├── products/     = product management
+
 ├── cart/         = user carts
+
 ├── orders/       = orders and checkout
+
 ├── payments/     = future payment integration
+
 └── media/        = product images
+
 
 🎯 Purpose of This Backend
 
