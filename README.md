@@ -74,7 +74,7 @@ pip install -r requirements.txt
 
 Create a database:
 
-CREATE DATABASE ecommerce;
+CREATE DATABASE triples;
 
 3. Run database migrations
 python manage.py migrate
@@ -90,11 +90,11 @@ http://127.0.0.1:8000/
 📌 Main API Endpoints
 Users
 
-/api/auth/register/ → Create account
+/api/users/register/ → Create account
 
-/api/auth/login/ → Login
+/api/users/login/ → Login
 
-/api/users/me/ → View profile
+/api/users/profile/ → View profile
 
 Products
 
