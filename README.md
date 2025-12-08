@@ -1,9 +1,10 @@
 E-Commerce Backend
 
-This backend is the engine of an online store for selling laptops, desktops, monitors, and accessories.
-It handles users, products, carts, orders, and emails.
+This backend is the engine of an online store for selling electronic devices, and accessories.
 
-This README explains everything in simple language.
+It handles users, products, carts, orders, payments integration and emails.
+
+This README explains everything.
 
 ✅ What This Backend Does
 1. Users
@@ -22,7 +23,7 @@ No user can see another user’s information
 
 Admin can add products
 
-Products have names, price, brand, category, and images
+Products have names, price, brand, category, description and images
 
 Users can view all products
 
