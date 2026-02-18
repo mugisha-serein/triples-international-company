@@ -10,16 +10,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'full_name', 'phone', 'address', 'password')
         
     def create(self, validated_data):
-        user = User.objects.create(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            full_name=validated_data.get('full_name', ''),
-            phone=validated_data.get('phone', ''),
-            address=validated_data.get('address', '')
-        )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+        from .services import UserService
+        return UserService.register_user(validated_data)
     
 
 class UserSerializer(serializers.ModelSerializer):

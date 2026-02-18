@@ -5,41 +5,23 @@ from orders.models import Order
 from .serializers import PaymentSerializer
 import uuid 
 
+from .services import PaymentService
+
 # Create your views here.
 
 class MakePaymentView(generics.CreateAPIView):
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_scope = 'payment_attempt'
 
     def post(self, request, *args, **kwargs):
-        user = request.user
         order_id = request.data.get('order_id')
+        
+        if not order_id:
+            return Response({"error": "order_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            order = Order.objects.get(id=order_id, user=user)
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        if hasattr(order, 'payment'):
-            return Response({"error": "Payment already exists for this order."}, status=status.HTTP_400_BAD_REQUEST)
+        # All logic (locking, validation, creation) moved to Service
+        payment = PaymentService.process_payment(request.user, order_id)
         
-        
-        # Simulate payment processing
-        transaction_id = str(uuid.uuid4())
-        payment_status = 'Completed'
-        
-        payment = Payment.objects.create(
-            users=user,
-            order=order,
-            amount=order.total_amount,
-            status=payment_status,
-            transaction_id=transaction_id
-        )
-        
-        # Update order status if payment is successful
-        if payment_status == 'Completed':
-            order.status = 'Processing'
-            order.save()
-            
-        serializers = PaymentSerializer(payment)
-        return Response(serializers.data, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(payment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

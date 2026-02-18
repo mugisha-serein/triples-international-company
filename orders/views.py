@@ -4,6 +4,7 @@ from .models import Order, OrderItem
 from .serializers import OrderSerializer
 from cart.models import CartItem
 from django.db import transaction
+from django.db.models import Prefetch
 from .utils import send_order_confirmation_email
 
 # Create your views here.
@@ -13,42 +14,34 @@ class OrderListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            Prefetch(
+                'items',
+                queryset=OrderItem.objects.select_related(
+                    'product',
+                    'product__category',
+                    'product__brand'
+                ).prefetch_related('product__images')
+            )
+        ).order_by('-created_at')
     
     
 class CheckoutView(generics.CreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
+    throttle_scope = 'checkout_attempt'
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user = request.user
-        cart_items = CartItem.objects.filter(user=user)
+        from .services import OrderService
+        
+        try:
+            order = OrderService.process_checkout(request.user)
+        except Exception as e:
+            # If it's a validation error from service, re-raise or handle
+            # check if it is a DRF ValidationError
+            if hasattr(e, 'detail'):
+                 return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+            raise e
 
-        if not cart_items.exists():
-            return Response({"detail": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create Order
-        order = Order.objects.create(user=user)
-        total_amount = 0
-        
-        for item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price
-            )
-            total_amount += item.product.price * item.quantity
-            
-        order.total_amount = total_amount
-        order.save()
-        
-        
-        # Clear Cart
-        cart_items.delete()
-        
-        send_order_confirmation_email(user.email, order)
-        
-        serializers = OrderSerializer(order)
-        return Response(serializers.data, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
