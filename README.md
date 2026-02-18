@@ -115,6 +115,8 @@ python manage.py test
 python manage.py test users
 python manage.py test products
 python manage.py test orders
+python manage.py test payments
+python manage.py test cart
 ```
 
 ## 📂 Project Structure
